@@ -43,23 +43,66 @@ Here's a method to find the lowest and highest values in a collection of integer
       return new Range(ageMin, ageMax);
     }
     
-We know enough about the data to know that they should never be as high as 110, or lower than 0, so we set those as our limits. This is fine as long as our assumption is correct. For example, if we're looking at people's ages, we can reasonably set a lower limit of zero and an upper limit of about 120, an age very few people reach.
+We know enough about the data to know that they should never be as high as 110, or lower than 0, so we set those as our limits. This is fine as long as our assumption is correct. For example, if we're looking at people's ages, we can reasonably set a lower limit of zero and an upper limit of about 110, an age very few people reach.
     
 But do we really know this? Let's put aside the fact that there are very rare records of people living beyond 110. The real problem is that we're assuming our data is valid. There could be a bug in the code that calculates people's ages, and we could get wildly unreasonable values. This method to determine ranges is incapable of alerting us to this bug. Do we really need to make any assumptions about the data? Why not write the method like this?
 
     private static Range determineRange(int[] data) {
-      int ageMin = Integer.MAX_VALUE;
-      int ageMax = Integer.MIN_VALUE;
+      int min = Integer.MAX_VALUE;
+      int max = Integer.MIN_VALUE;
     
+      if (data.length == 0) {
+        throw new IllegalStateException("Empty array");
+      }
       for (int i: data) {
-        if (i < ageMin) {
-          ageMin = i;
+        if (i < min) {
+          min = i;
         }
-        if (i > ageMax) {
-          ageMax = i;
+        if (i > max) {
+          max = i;
         }
       }
-      return new Range(ageMin, ageMax);
+      return new Range(min, max);
     }
 
-Now it can't fail. If our data is invalid, this will let us know. It will work with any collection of integer values. The assumptions we made about people's ages are completely unnecessary. They offer us no advantage. And yeah, those assumptions are probably right, and the data will nearly always be valid. But do we gain anything by making those assumptions? We've gone from a method that will *usually* work to one that will *always* work, and we did so effortlessly. And yes, I've seen this issue come up in an actual project, where birth years were assumed to have 4 digits, but were being entered with 2 digits, so everyone was about 2000 years old. *Never make an assumption that you don't need to make.*
+Now it can't fail. If our data is invalid, this will let us know. And it's not limited to people's ages. It will work with any collection of integer values. The assumptions we made about people's ages are completely unnecessary. They offer us no advantage. And yeah, those assumptions are probably right, and the data will nearly always be valid. But do we gain anything by making those assumptions? We've gone from a method that will *usually* work to one that will *always* work, and more importantly, we did so effortlessly. And yes, I've seen this issue come up in an actual project, where birth years were assumed to have 2 digits, but were being entered with 4 digits, so everyone was about 2000 years old. *Never make an assumption that you don't need to make.*
+
+Some people will argue with you. They will claim that Integer.MAX_VALUE is "too high." They seem to be concluding that you're assuming that Integer.MAX_VALUE is a possible value. But you're not assuming that. You're not making any assumptions. But you can avoid this pointless argument by rewriting the method in a way that makes it clearer that you're not making any assumptions.
+
+    private static Range determineRange(int[] data) {
+      int min = data[0];
+      int max = data[0];
+    
+      if (data.length == 0) {
+        throw new IllegalStateException("Empty array");
+      }
+      for (int i: data) {
+        if (i < min) {
+          min = i;
+        } else if (i > max) {
+          max = i;
+        }
+      }
+      return new Range(min, max);
+    }
+
+or this, for an array:
+
+    private static Range determineRange(List<Integer> data) {
+      if (data.isEmpty()) {
+        throw new IllegalStateException("Empty array");
+      }
+      Iterator<Integer> iterator = data.iterator();
+      int min = iterator.next(); // We don't need to call hasNext()
+      int max = min;
+    
+      while (iterator.hasNext()) {
+        int i = iterator.next();
+        if (i < min) {
+          min = i;
+        } else if (i > max) {
+          max = i;
+        }
+      }
+      return new Range(min, max);
+    }
