@@ -5,7 +5,7 @@
  * consent of Common Securitization Solutions, LLC.
  */
 
-package com.mm.exp.util;
+package com.mm.exp.extend;
 
 import java.util.SortedMap;
 

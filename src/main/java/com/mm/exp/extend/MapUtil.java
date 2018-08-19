@@ -1,28 +1,44 @@
-/*
- * Copyright © [2018] Common Securitization Solutions, LLC. All rights reserved.
- * This software contains confidential information and trade secrets of Common Securitization
- * Solutions, LLC. Use, disclosure, or reproduction is prohibited without the prior written
- * consent of Common Securitization Solutions, LLC.
- */
-
-package com.mm.exp.util;
+package com.mm.exp.extend;
 
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 
-@SuppressWarnings("UtilityClassCanBeEnum")
+@SuppressWarnings({"UtilityClassCanBeEnum", "WeakerAccess"})
 public final class MapUtil {
 	private MapUtil() { }
 
+	/**
+	 * Wraps an existing Map in a SafeMap. This method does NOT fail fast if the wrong method is called. It just relies
+	 * on the developer's IDE to catch any use of deprecated methods.
+	 * @param map The Map to wrap
+	 * @param <K> The Key type
+	 * @param <V> The Value Type
+	 * @return A SafeMap that wraps the provided map instance.
+	 */
 	static <K, V> SafeMap<K, V> wrap(Map<K, V> map) {
 		return new WrappedMap<>(map);
 	}
-	
-	static <K, V> SafeMap<K, V> wrap(Map<K,V> map, Class<K> keyClass, Class<V> valueClass) {
+
+	/**
+	 * Wraps an existing Map in a fast-fail SafeMap. Any calls to unsafe methods will fail fast. It also relies
+	 * on the developer's IDE to catch any use of deprecated methods. 
+	 * @param map The Map to wrap
+	 * @param keyClass The Key class instance
+	 * @param valueClass The value class instance
+	 * @param <K> The Key Class
+	 * @param <V> The Value Class
+	 * @return A fast-fail SafeMap that wraps the provided map instance.
+	 */
+	static <K, V> SafeMap<K, V> wrapFailFast(Map<K,V> map, Class<K> keyClass, Class<V> valueClass) {
 		return new SafeWrappedMap<>(map, keyClass, valueClass);
 	}
 
+	/**
+	 * Wrapped Map that does not fail fast. It relies solely on the developer's IDE to catch illegal calls.
+	 * @param <K> The Key type
+	 * @param <V> The Value type.
+	 */
 	private static final class WrappedMap<K, V> implements SafeMap<K, V> {
 		private final Map<K, V> map;
 		private WrappedMap(Map<K, V> theMap) {
@@ -39,36 +55,41 @@ public final class MapUtil {
 			return map.isEmpty();
 		}
 
-		/**
-		 * Deprecated due to lack of type safety. Use {@link #safeHasKey(K)} instead.
-		 * <p/>
-		 * {@inheritDoc}
-		 * <p/>
-		 * This implementation is written to fail Fast. If you call it with a key that is not of type K, it will throw a 
-		 * ClassCastException instead of returning null, which is what a Map implementation would do.
-		 * <p/>
-		 * @deprecated Use #safeHasKey() instead
-		 * 
-		 * @see #safeHasKey(Object) 
-		 */
-		@Deprecated
+//		/**
+//		 * Deprecated due to lack of type safety. Use {@link #safeHasKey(K)} instead.
+//		 * <p>
+//		 * {@inheritDoc}
+//		 * <p>
+//		 * This implementation is written to fail Fast. If you call it with a key that is not of type K, it will throw a 
+//		 * ClassCastException instead of returning null, which is what a Map implementation would do.
+//		 * <p>
+//		 * @deprecated Use #safeHasKey() instead
+//		 * 
+//		 * @see #safeHasKey(Object) 
+//		 */
+////		@Deprecated
+//		@Override
+//		public boolean containsKey(Object key) {
+//			//noinspection unchecked
+//			K k = (K) key;
+//			return map.containsKey(k);
+//		}
+
+
 		@Override
-		public boolean containsKey(Object key) {
-			//noinspection unchecked
-			K k = (K) key;
-			return map.containsKey(k);
+		public boolean containsKey(final Object key) {
+			return map.containsKey(key);
 		}
 
 		@Override
 		public boolean containsValue(Object value) {
 			//noinspection unchecked
-			return map.containsValue((V)value);
+			return map.containsValue(value);
 		}
 
 		@Override
 		public V get(Object key) {
-			//noinspection unchecked
-			return find((K)key);
+			return map.get(key);
 		}
 
 		@Override
@@ -78,8 +99,7 @@ public final class MapUtil {
 
 		@Override
 		public V remove(Object key) {
-			//noinspection unchecked
-			return safeRemove((K)key);
+			return map.remove(key);
 		}
 
 		@Override
@@ -110,7 +130,7 @@ public final class MapUtil {
 		@Override
 		public V getOrDefault(Object key, V defaultValue) {
 			//noinspection unchecked
-			return map.getOrDefault((K) key, defaultValue);
+			return map.getOrDefault(key, defaultValue);
 		}
 	}
 
@@ -137,13 +157,16 @@ public final class MapUtil {
 
 		/**
 		 * Deprecated due to lack of type safety. Use {@link #safeHasKey(K)} instead.
-		 * <p/>
+		 * <p>
 		 * {@inheritDoc}
-		 * <p/>
-		 * This implementation is written to fail Fast. If you call it with a key that is not of type K, it will throw a 
+		 * <p>
+		 * This implementation is written to fail fast. If you call it with a key that is not of type K, it will throw a 
 		 * ClassCastException instead of returning null, which is what a Map implementation would do.
-		 * <p/>
+		 * <p>
 		 * @deprecated Use #safeHasKey() instead
+		 *
+		 * @param key The key
+		 * @return The mapped object, if the the key is of the correct type. Throws a ClassCastException otherwise
 		 *
 		 * @see #safeHasKey(Object)
 		 */
@@ -154,6 +177,18 @@ public final class MapUtil {
 			return map.containsKey(keyClass.cast(key));
 		}
 
+		/**
+		 * {@inheritDoc}
+		 * <p>
+		 * This implementation is written to fail fast. If you call it with a value that is not of type V, it will throw a 
+		 * ClassCastException instead of returning false, which is what a Map implementation would do.
+		 * <p>
+		 * @deprecated Use #safeHasValue(V) instead
+		 *
+		 * @param value
+		 * @return
+		 */
+		@Deprecated
 		@Override
 		public boolean containsValue(Object value) {
 			//noinspection unchecked
@@ -162,8 +197,7 @@ public final class MapUtil {
 
 		@Override
 		public V get(Object key) {
-			//noinspection unchecked
-			return find(keyClass.cast(key));
+			return map.get(keyClass.cast(key));
 		}
 
 		@Override
@@ -173,8 +207,7 @@ public final class MapUtil {
 
 		@Override
 		public V remove(Object key) {
-			//noinspection unchecked
-			return safeRemove(keyClass.cast(key));
+			return map.remove(keyClass.cast(key));
 		}
 
 		@Override
