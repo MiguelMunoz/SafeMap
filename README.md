@@ -12,23 +12,23 @@ Here's what I mean. When I'm maintaining a project, many of the bugs that come i
 
 Allow me to give you a fascinating example of this principle in action. To do so, I'll have to leave the field of software and take you to the field of medicine, where the stakes are much higher than increased maintenance costs. The example comes from what some doctors learned about treating cystic fibrosis. This example is drawn from **The Bell Curve**, an article in the December 6, 2004 issue of *The New Yorker*.
 
-A certain clinic has a much better success rate than other clinics, and the secret of their success was partly due to the extraordinary effort they put into encouraging their patients into taking their medicine every single day, even when they were feeling healthy. Even when they were feeling great. Here's why. A healthy patient's chance of having a good day without medicine is 99.5%. That sounds pretty good. But with the medicine, it goes up to 99.95%. It hardly seems worth it. But that turns out to be a huge difference. There are 365 days in a year. When you multiply those odds through an entire year, the 99.95% comes to an 83% chance of making it through the year, while the 99.5% comes to only 16%. For cystic fibrosis patients, this can be the difference between living to be 30 versus living to be 46. If the patient has a child at age 20, this is the difference between dying when the child is 10 or 26. Some of the patients are reaching their 60s, which is unheard of for cystic fibrosis. So the medical staff at this clinic aims for the 99.95%. They aim for higher if there's a way. 99.5% is simply not good enough.
+A certain clinic has a much better success rate than other clinics, and the secret of their success was partly due to the extraordinary effort they put into encouraging their patients into taking their medicine every single day, even when they were feeling healthy. Even when they were feeling great. Here's why. A healthy patient's chance of having a good day without medicine is 99.5%. That sounds pretty good. But with the medicine, it goes up to 99.95%. That seems like an insignificant difference. It hardly seems worth it. But that turns out to be a huge difference. There are 365 days in a year. When you multiply those odds through an entire year, the 99.95% comes to an 83% chance of making it through the year, while the 99.5% comes to only 16%. For cystic fibrosis patients, this can be the difference between living to be 30 versus living to be 46. If the patient has a child at age 20, this is the difference between dying when the child is 10 or 26. Some of the patients are reaching their 60s, which used to be unheard of for cystic fibrosis. So the medical staff at this clinic aims for the 99.95%. They aim for higher if there's a way. 99.5% is simply not good enough.
 
-To get back to software, should we aim to write code that will usually work? It sounds reasonable, but it's often not a good idea. Many times I've seen code that will usually work, but a few trivial changes will turn it into code that will always work. So they coder didn't saving much time by settling for *usually*. 
+To get back to software, should we aim to write code that will usually work? It sounds reasonable, but it's often not a good idea. Many times I've seen code that will usually work, but a few trivial changes will turn it into code that will *always* work. So the coder didn't saving much time by settling for *usually*.
 
-A software application is a huge assembly of many small pieces of code. If all of them *usually* work, then the overall reliability might not be very good at all. If you have 10000 elements, each of which has a 1 in a thousand chance of failing on any given day, then you'll actually see ten failures a day. So *usually* shouldn't be good enough, when *always* is just a few more lines of code.
+A software application is a huge assembly of many small pieces of code. If all of them *usually* work, then the overall reliability might not be very good at all. If you have 10000 elements, each of which has a 1 in a thousand chance of failing on any given day, then you'll actually see ten failures a day. So aiming for *usually works* instead of *alwasy works* is like aiming for 99.5% instead of 99.95%. So *usually* shouldn't be good enough, especially when *always* means just a few lines of code. Of course, this is a simplification. But the point is that aiming for 100% reliability is well worth the effort.
 
 How can we distinguish between *usually* and *always*? One way is to be aware of what I call the *Unnecessary Assumption Fallacy*.
 
 ## The Unnecessary Assumption Fallacy
 
-Never make an assumption that you don't need to make. In writing software, we often make simplifying assumptions. If these assumptions are correct, we're fine, but if they're not, we have inadvertently introduced a bug into our code. And in my experience, many of the assumptions we make are completely unnecessary. Never make an assumption that you don't need to make.
+Never make an assumption that you don't need to make. In writing software, we often make simplifying assumptions. If these assumptions are *always* correct, we're fine, but if they're not, we have inadvertently introduced a bug into our code. Even if they're *usually* correct. And in my experience, many of the assumptions we make are completely unnecessary. Never make an assumption that you don't need to make.
 
 Here's an example.
 
 Here's a method to find the lowest and highest values in a collection of integers. These number represent people's ages.
 
-    private static Range determineRange(int[] data) {
+    private static Range determineRange(List<Integer> data) {
       int ageMin = 110;
       int ageMax = 0;
     
@@ -45,55 +45,22 @@ Here's a method to find the lowest and highest values in a collection of integer
     
 We know enough about the data to know that they should never be as high as 110, or lower than 0, so we set those as our limits. This is fine as long as our assumption is correct. For example, if we're looking at people's ages, we can reasonably set a lower limit of zero and an upper limit of about 110, an age very few people reach.
     
-But do we really know this? Let's put aside the fact that there are very rare records of people living beyond 110. The real problem is that we're assuming our data is valid. There could be a bug in the code that calculates people's ages, and we could get wildly unreasonable values. This method to determine ranges is incapable of alerting us to this bug. Do we really need to make any assumptions about the data? Why not write the method like this?
+But do we really know this? Let's put aside the fact that there are very rare records of people living beyond 110. The real problem is that we're assuming our data is valid. There could be a bug in the code that calculates people's ages, and we could get wildly unreasonable values. This method to determine ranges is incapable of alerting us to this bug. Do we really need to make any assumptions about the data? Instead of setting ageMin and ageMax to 110 and 0, why not set them to Integer.MAX_VALUE and Integer.MIN_VALUE?
 
-    private static Range determineRange(int[] data) {
-      int min = Integer.MAX_VALUE;
-      int max = Integer.MIN_VALUE;
-    
-      if (data.length == 0) {
-        throw new IllegalStateException("Empty array");
-      }
-      for (int i: data) {
-        if (i < min) {
-          min = i;
-        }
-        if (i > max) {
-          max = i;
-        }
-      }
-      return new Range(min, max);
-    }
+This will draw outrageous but silly objections from other developers. They'll think you're assuming that people can live beyond a million years old. But you're not making that assumption. You're not assuming anything. You're not even assuming the data is valid. And more important, you now have a more generic method that will work for any kind of Integer data. The method will for for file sizes as easily as people's ages. 
 
-Now it can't fail. If our data is invalid, this will let us know. And it's not limited to people's ages. It will work with any collection of integer values. The assumptions we made about people's ages are completely unnecessary. They offer us no advantage. And yeah, those assumptions are probably right, and the data will nearly always be valid. But do we gain anything by making those assumptions? We've gone from a method that will *usually* work to one that will *always* work, and more importantly, we did so effortlessly. And yes, I've seen this issue come up in an actual project, where birth years were assumed to have 2 digits, but were being entered with 4 digits, so everyone was about 2000 years old. *Never make an assumption that you don't need to make.*
+The point is that, with a minor change, the code can't fail. If our data is invalid, this will let us know. The assumptions we made about people's ages offer us no advantage. And yeah, those assumptions are probably right, and the data will nearly always be valid. But do we gain anything by making those assumptions? 
 
-Some people will argue with you. They will claim that Integer.MAX_VALUE is "too high." They seem to be concluding that you're assuming that Integer.MAX_VALUE is a possible value. But you're not assuming that. You're not making any assumptions. But you can avoid this pointless argument by rewriting the method in a way that makes it clearer that you're not making any assumptions.
+Also, the change that takes us from *usually* works to *always* works was effortless. And yes, I've seen this issue come up in an actual project, where birth years were assumed to have 2 digits, but were being entered with 4 digits, so everyone was about 2000 years old. *Never make an assumption that you don't need to make.*
 
-    private static Range determineRange(int[] data) {
-      int min = data[0];
-      int max = data[0];
-    
-      if (data.length == 0) {
-        throw new IllegalStateException("Empty array");
-      }
-      for (int i: data) {
-        if (i < min) {
-          min = i;
-        } else if (i > max) {
-          max = i;
-        }
-      }
-      return new Range(min, max);
-    }
+And you can avoid pointless arguments about million-year-old people by rewriting the method in a way that makes it clearer that you're not making any assumptions. You can simply set min and max to the first element of the array.
 
-or this, for an array:
-
-    private static Range determineRange(List<Integer> data) {
-      if (data.isEmpty()) {
-        throw new IllegalStateException("Empty array");
-      }
+    private static Range determineRange(Iterable<Integer> data) {
       Iterator<Integer> iterator = data.iterator();
-      int min = iterator.next(); // We don't need to call hasNext()
+      if (!iterator.hasNext()) {
+        throw new IllegalStateException("Empty array");
+      }
+      int min = iterator.next(); // We already called hasNext()
       int max = min;
     
       while (iterator.hasNext()) {
