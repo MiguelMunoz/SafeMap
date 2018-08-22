@@ -20,6 +20,9 @@ import java.util.Map;
  * V remove(Object)              V safeRemove(K) 
  * V getOrDefault(Object, V)     V safeGetOrDefault(K, V)
  * </pre>
+ * (See Also http://smartkey.co.uk/development/javaprogramming/type-safe-map/)
+ * (See Also https://gerardnico.com/code/design_pattern/typesafe_heterogeneous_container)
+ * (See Also https://dzone.com/articles/a-type-safe-java-map-builder-using-alternating-int)
  */
 @SuppressWarnings({ "deprecation", "DeprecatedIsStillUsed", "unused" })
 public interface SafeMap<K, V> extends Map<K, V> {
